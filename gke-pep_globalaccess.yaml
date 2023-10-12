@@ -1,0 +1,248 @@
+apiVersion: container.gcp.upbound.io/v1beta1
+kind: Cluster
+metadata:
+  annotations:
+    meta.upbound.io/example-id: container/v1beta1/cluster
+  labels:
+    testing.upbound.io/example-name: cp-intconn-cluster
+  name: cp-intconn-cluster
+spec:
+  forProvider:
+    addonsConfig:
+      - configConnectorConfig:
+          - enabled: true
+        gcePersistentDiskCsiDriverConfig:
+          - enabled: true
+        gcpFilestoreCsiDriverConfig:
+          - enabled: true
+        horizontalPodAutoscaling:
+          - disabled: false
+        httpLoadBalancing:        
+          - disabled: false
+        networkPolicyConfig:
+          - disabled: false
+    binaryAuthorization:
+      - evaluationMode: DISABLED
+    clusterAutoscaling:
+      - autoProvisioningDefaults:
+          - serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com"
+        enabled: false
+    enableIntranodeVisibility: false
+    enableShieldedNodes: true
+    initialNodeCount: 1
+    ipAllocationPolicy:
+      - clusterIpv4CidrBlock:
+        servicesIpv4CidrBlock:
+    location: europe-west3
+    loggingConfig:
+      - enableComponents:
+          - SYSTEM_COMPONENTS
+          - WORKLOADS
+    masterAuth:
+      - clientCertificateConfig:
+          - issueClientCertificate: false
+    masterAuthorizedNetworksConfig:
+      - cidrBlocks:
+          - cidrBlock: "192.168.0.0/16"
+    minMasterVersion: "1.27.4"
+    monitoringConfig:
+      - enableComponents:
+          - SYSTEM_COMPONENTS
+        managedPrometheus:
+          - enabled: true
+    network: "projects/web-project-init/global/networks/custom-network1"
+    subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+    networkPolicy:
+      - enabled: true
+    networkingMode: VPC_NATIVE
+    privateClusterConfig:
+      - enablePrivateNodes: true
+        enablePrivateEndpoint: false
+        masterGlobalAccessConfig:
+          - enabled: true
+        masterIpv4CidrBlock: 172.16.0.0/28
+    releaseChannel:
+      - channel: REGULAR
+    # removeDefaultNodePool: true
+    workloadIdentityConfig:
+      - workloadPool: "web-project-init.svc.id.goog"
+  writeConnectionSecretToRef:
+    name: gke-conn
+    namespace: crossplane-test
+
+---
+
+apiVersion: container.gcp.upbound.io/v1beta1
+kind: NodePool
+metadata:
+  annotations:
+    meta.upbound.io/example-id: container/v1beta1/nodepool
+  labels:
+    testing.upbound.io/example-name: nodepool-1
+  name: nodepool-1
+spec:
+  forProvider:
+    autoscaling:
+      - locationPolicy: BALANCED
+        minNodeCount: 0
+        maxNodeCount: 1
+    cluster: cp-intconn-cluster
+    clusterSelector:
+      matchLabels:
+        testing.upbound.io/example-name: cp-intconn-cluster
+    location: europe-west3
+    management:
+      - autoRepair: true      
+        autoUpgrade: true
+    nodeConfig:
+      - diskSizeGb: 120
+        diskType: pd-ssd
+        imageType: COS_CONTAINERD
+        machineType: e2-highcpu-4
+        preemptible: true
+        serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com"
+        serviceAccountSelector:
+          matchLabels:
+            testing.upbound.io/example-name: gke-sa
+        workloadMetadataConfig:
+          - mode: GKE_METADATA
+    nodeLocations:
+      - "europe-west3-a"
+      # - "europe-west3-b"
+      - "europe-west3-c"
+    upgradeSettings:
+      - maxSurge: 1
+        maxUnavailable: 0
+    version: "1.27.4"
+
+---
+
+## Network
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Network
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/subnetwork
+  labels:
+    testing.upbound.io/example-name: custom_network1
+  name: custom-network1
+spec:
+  forProvider:
+    autoCreateSubnetworks: false
+    # routingMode: GLOBAL
+---
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Subnetwork
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/subnetwork
+  labels:
+      testing.upbound.io/example-name: subnet
+  name: subnet-eu-west-192
+spec:
+  forProvider:
+    ipCidrRange: 192.168.1.0/24
+    networkSelector:
+      matchLabels:
+        testing.upbound.io/example-name: custom_network1
+    region: europe-west3
+
+---
+
+## Cloud Router
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Router
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/routernat
+  labels:
+    testing.upbound.io/example-name: nat_router
+  name: nat-router
+spec:
+  forProvider:
+    bgp:
+    - asn: 16550
+    networkSelector:
+      matchLabels:
+        testing.upbound.io/example-name: custom_network1
+    region: europe-west3
+
+---
+
+## Route for the masterIpv4CidrBlock IP address range in other (default) network
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Route
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/route
+#   labels:
+#     testing.upbound.io/example-name: pep_route
+#   name: pep-route
+# spec:
+#   forProvider:
+#     destRange: 10.0.0.0/8
+#     networkSelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: custom_network1
+#     nextHopIp: 192.168.1.5
+#     priority: 100
+
+---
+
+## Export cluster's VPC network (custom-network1) custom routes in the peering relationship to the control plane's VPC network (default)
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: NetworkPeeringRoutesConfig
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/networkpeeringroutesconfig
+#   labels:
+#     testing.upbound.io/example-name: export_custom_routes
+#   name: export-custom-routes
+# spec:
+#   forProvider:
+#     exportCustomRoutes: true
+#     importCustomRoutes: true
+#     networkSelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: custom_network1
+#     peering: gke-nde58daf99ac789444fa-45fa-ff94-peer
+# ---
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: NetworkPeeringRoutesConfig
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/networkpeeringroutesconfig
+#   labels:
+#     testing.upbound.io/example-name: export_custom_routes_servicenetworking
+#   name: export-custom-routes-servicenetworking
+# spec:
+#   forProvider:
+#     exportCustomRoutes: true
+#     importCustomRoutes: true
+#     network: default
+#     peering: servicenetworking-googleapis-com
+
+---
+
+## VLAN attachment
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: InterconnectAttachment
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/interconnectattachment
+  labels:
+    testing.upbound.io/example-name: interconnect_attachment
+  name: interconnect-attachment
+spec:
+  forProvider:
+    region: europe-west3
+    # edgeAvailabilityDomain: AVAILABILITY_DOMAIN_1
+    interconnect: gke-interconnect
+    # mtu: "1500"
+    routerSelector:
+      matchLabels:
+        testing.upbound.io/example-name: nat_router
+    # type: PARTNER 
+
+---
+

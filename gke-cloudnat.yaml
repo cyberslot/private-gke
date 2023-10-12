@@ -1,0 +1,414 @@
+apiVersion: container.gcp.upbound.io/v1beta1
+kind: Cluster
+metadata:
+  annotations:
+    meta.upbound.io/example-id: container/v1beta1/cluster
+  labels:
+    testing.upbound.io/example-name: cp-nat-cluster
+  name: cp-nat-cluster
+spec:
+  forProvider:
+    addonsConfig:
+      - configConnectorConfig:
+          - enabled: true
+        gcePersistentDiskCsiDriverConfig:
+          - enabled: true
+        gcpFilestoreCsiDriverConfig:
+          - enabled: true
+        horizontalPodAutoscaling:
+          - disabled: false
+        httpLoadBalancing:        
+          - disabled: false
+        networkPolicyConfig:
+          - disabled: false
+    binaryAuthorization:
+      - evaluationMode: DISABLED
+    clusterAutoscaling:
+      - autoProvisioningDefaults:
+          # - oauthScopes:
+          #     - https://www.googleapis.com/auth/cloud-platform
+          #     - https://www.googleapis.com/auth/devstorage.read_only
+          #     - https://www.googleapis.com/auth/logging.write
+          #     - https://www.googleapis.com/auth/monitoring
+          #     - https://www.googleapis.com/auth/servicecontrol
+          #     - https://www.googleapis.com/auth/service.management.readonly
+          #     - https://www.googleapis.com/auth/trace.append
+          - serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com"
+    ## Experimental in relation to default nodepool
+            # diskSize: 120
+            # diskType: pd-ssd
+            # imageType: COS_CONTAINERD
+            # management:
+            #   - autoRepair: true      
+            #     autoUpgrade: true
+            # upgradeSettings:
+            #   - maxSurge: 1
+            #     maxUnavailable: 0     
+        enabled: false
+        # resourceLimits:
+        #   - resourceType: cpu
+        #     minimum: 2
+        #     maximum: 3
+        #   - resourceType: memory
+        #     maximum: 14
+    ## --------------------------------------------
+    enableIntranodeVisibility: false
+    enableShieldedNodes: true
+    initialNodeCount: 1
+    ipAllocationPolicy:
+      - clusterIpv4CidrBlock:
+        servicesIpv4CidrBlock:
+    location: europe-west3
+    loggingConfig:
+      - enableComponents:
+          - SYSTEM_COMPONENTS
+          - WORKLOADS
+    masterAuth:
+      - clientCertificateConfig:
+          - issueClientCertificate: false
+    masterAuthorizedNetworksConfig:
+      - cidrBlocks:
+          - cidrBlock: "192.168.0.0/16"
+    minMasterVersion: "1.27.4"
+    monitoringConfig:
+      - enableComponents:
+          - SYSTEM_COMPONENTS
+        managedPrometheus:
+          - enabled: true
+    network: "projects/web-project-init/global/networks/custom-network1"
+    subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+    networkPolicy:
+      - enabled: true
+    networkingMode: VPC_NATIVE
+    ## Experimental in relation to default nodepool
+    # nodeConfig:
+    #   - diskSizeGb: 120
+    #     diskType: pd-ssd
+    #     gcfsConfig:
+    #       - enabled: true
+    #     imageType: COS_CONTAINERD
+    #     machineType: e2-standard-2
+    #     serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com" 
+    # nodeLocations:
+    #   - "europe-west3-a"
+    #   - "europe-west3-c"
+    # nodeVersion: "1.27.4"
+    ## --------------------------------------------
+    privateClusterConfig:
+      - enablePrivateEndpoint: true
+        enablePrivateNodes: true
+        masterIpv4CidrBlock: 172.16.0.0/28
+    releaseChannel:
+      - channel: REGULAR
+    removeDefaultNodePool: true
+    serviceExternalIpsConfig:
+      - enabled: false
+    workloadIdentityConfig:
+      - workloadPool: "web-project-init.svc.id.goog"
+  writeConnectionSecretToRef:
+    name: gke-conn
+    namespace: crossplane-test
+
+---
+
+apiVersion: container.gcp.upbound.io/v1beta1
+kind: NodePool
+metadata:
+  annotations:
+    meta.upbound.io/example-id: container/v1beta1/nodepool
+  labels:
+    testing.upbound.io/example-name: app_nodepool
+  name: app-nodepool
+spec:
+  forProvider:
+    autoscaling:
+      - locationPolicy: BALANCED
+        minNodeCount: 0
+        maxNodeCount: 1
+    cluster: cp-nat-cluster
+    clusterSelector:
+      matchLabels:
+        testing.upbound.io/example-name: cp-nat-cluster
+    location: europe-west3
+    management:
+      - autoRepair: true      
+        autoUpgrade: true
+    nodeConfig:
+      - diskSizeGb: 120
+        diskType: pd-ssd
+        gcfsConfig:
+          - enabled: true
+        imageType: COS_CONTAINERD
+        machineType: e2-standard-4
+        preemptible: true
+        serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com"
+        serviceAccountSelector:
+          matchLabels:
+            testing.upbound.io/example-name: gke-sa
+        workloadMetadataConfig:
+          - mode: GKE_METADATA
+    nodeLocations:
+      - "europe-west3-a"
+      # - "europe-west3-b"
+      - "europe-west3-c"
+    upgradeSettings:
+      - maxSurge: 1
+        maxUnavailable: 0
+    version: "1.27.4"
+
+---
+
+## Network
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Network
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/subnetwork
+  labels:
+    testing.upbound.io/example-name: custom_network1
+  name: custom-network1
+spec:
+  forProvider:
+    autoCreateSubnetworks: false
+    routingMode: GLOBAL
+---
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Subnetwork
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/subnetwork
+  labels:
+      testing.upbound.io/example-name: subnet
+  name: subnet-eu-west-192
+spec:
+  forProvider:
+    ipCidrRange: 192.168.1.0/24
+    networkSelector:
+      matchLabels:
+        testing.upbound.io/example-name: custom_network1
+    region: europe-west3
+
+# ---
+
+## N.B.!! -> REQUIRES ORGANIZATIONAL LEVEL PERMISSIONS
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: FirewallPolicyRule
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/firewallpolicyrule
+#     upjet.upbound.io/manual-intervention: "Required organizational level permissions"
+#   name: allow-ssh
+# spec:
+#   forProvider:
+#     action: allow
+#     description: FW Rule Resource
+#     direction: INGRESS
+#     disabled: false
+#     enableLogging: true
+#     firewallPolicySelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: allow-ssh
+#     match:
+#     - srcIpRanges:
+#       - 35.235.240.0/20
+#       layer4Configs:
+#       - ipProtocol: tcp
+#         ports:
+#         - "22"
+#     priority: 1000
+# ---
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: FirewallPolicy
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/firewallpolicyrule
+#     upjet.upbound.io/manual-intervention: "Required organizational level permissions"
+#   labels:
+#     testing.upbound.io/example-name: allow-ssh
+#   name: allow-ssh
+# spec:
+#   forProvider:
+#     description: FW Policy for GKE Cloud NAT
+#     parent: organizations/<ORGANIZATION_NAME>
+#     shortName: allow-ssh
+
+---
+
+## IAP SSH permissions
+# apiVersion: iap.gcp.upbound.io/v1beta1
+# kind: TunnelIAMMember
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: iap/v1beta1/tunneliammember
+#   labels:
+#     testing.upbound.io/example-name: node_tunnel_access
+#   name: node-tunnel-access
+# spec:
+#   forProvider:
+#     member: serviceAccount:gke-sa@web-project-init.iam.gserviceaccount.com
+#     role: "roles/iap.tunnelResourceAccessor"
+
+---
+
+## Cloud NAT (RouterNAT is actual NAT gateway)
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: RouterNAT
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/routernat
+  labels:
+    testing.upbound.io/example-name: nat_config
+  name: nat-config
+spec:
+  forProvider:
+    logConfig:
+    - enable: true
+      filter: ERRORS_ONLY
+    natIpAllocateOption: AUTO_ONLY
+    region: europe-west3
+    routerSelector:
+      matchLabels:
+        testing.upbound.io/example-name: nat_router
+    sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
+---
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Router
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/routernat
+  labels:
+    testing.upbound.io/example-name: nat_router
+  name: nat-router
+spec:
+  forProvider:
+    bgp:
+    - asn: 64514
+    networkSelector:
+      matchLabels:
+        testing.upbound.io/example-name: custom_network1
+    region: europe-west3
+
+---
+
+
+## Bastion instance for private cluster access
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: InstanceFromTemplate
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/instancefromtemplate
+  labels:
+    testing.upbound.io/example-name: bastion_instance_ubuntu2304_from_template
+  name: bastion-instance-ubuntu2304-from-template
+spec:
+  forProvider:
+    name: bastion-instance-ubuntu2304
+    sourceInstanceTemplateSelector:
+      matchLabels:
+        testing.upbound.io/example-name: bastion_instance_ubuntu2304_template
+    zone: europe-west3-a
+
+### ====================================================================
+
+
+
+---
+
+## VPN related resources (EXPERIMENTAL ONLY) ===========================
+# apiVersion: compute.gcp.upbound.io/v1beta1 
+# kind: VPNTunnel
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/vpntunnel
+#     upjet.upbound.io/manual-intervention: "Dependant reference types not currently supported"
+#   labels:
+#     # testing.upbound.io/example-name: vpn_tunnel
+#     testing.upbound.io/example-name: vpn-tunnel
+#   name: vpn-tunnel
+# spec:
+#   forProvider:
+#     peerIp: 95.111.6.231
+#     region: europe-west3
+#     sharedSecretSecretRef:
+#       key: secret
+#       name: vpn-tunnel
+#       namespace: crossplane-test
+#     targetVpnGatewaySelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: vpn_gw   
+# ---
+# apiVersion: v1 # Existing
+# kind: Secret
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/vpntunnel
+#     upjet.upbound.io/manual-intervention: "Dependant reference types not currently supported"
+#   labels:
+#     testing.upbound.io/example-name: vpn-tunnel
+#   name: vpn-tunnel
+#   namespace: crossplane-test
+# data:
+#   # echo 'a secret message' | base64
+#   secret: YSBzZWNyZXQgbWVzc2FnZQo=
+# ---
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: ForwardingRule
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/vpntunnel
+#     upjet.upbound.io/manual-intervention: "Dependant reference types not currently supported"
+#   labels:
+#     testing.upbound.io/example-name: vpn_tunnel_esp_fwrule
+#   name: vpn-tunnel-esp-fwrule
+# spec:
+#   forProvider:
+#     # ipAddressSelector:
+#     #   matchLabels:
+#     #     testing.upbound.io/example-name: vpn-tunnel
+#     ipProtocol: ESP
+#     targetSelector:
+#       matchLabels:
+#         # testing.upbound.io/example-name: vpn_gw
+#         testing.upbound.io/example-name: vpn-tunnel
+#     region: europe-west3
+# ---
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Route
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/vpntunnel
+#     upjet.upbound.io/manual-intervention: "Dependant reference types not currently supported" 
+#   labels:
+#     # testing.upbound.io/example-name: vpn_route
+#     testing.upbound.io/example-name: vpn-tunnel
+#   # name: vpn-route
+#   name: vpn-tunnel
+# spec:
+#   forProvider:
+#     destRange: 95.111.6.0/32
+#     networkSelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: custom_network1
+#     nextHopVpnTunnelSelector:
+#       matchLabels:
+#         # testing.upbound.io/example-name: vpn_tunnel
+#         testing.upbound.io/example-name: vpn-tunnel
+#     priority: 1000
+# ---
+# apiVersion: compute.gcp.upbound.io/v1beta1 # Existing
+# kind: VPNGateway
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/vpntunnel
+#     upjet.upbound.io/manual-intervention: "Dependant reference types not currently supported"
+#   labels:
+#     # testing.upbound.io/example-name: vpn_gw
+#     testing.upbound.io/example-name: vpn-tunnel
+#   # name: vpn-gw
+#   name: vpn-tunnel
+# spec:
+#   forProvider:
+#     networkSelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: custom_network1
+#     region: europe-west3
