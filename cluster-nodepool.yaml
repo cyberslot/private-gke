@@ -41,7 +41,7 @@ spec:
       - clientCertificateConfig:
           - issueClientCertificate: false  
     # minMasterVersion: "1.27.4" # REGULAR channel
-    minMasterVersion: "1.28.1" # RAPID channel
+    minMasterVersion: "1.28" # RAPID channel
     monitoringConfig:
       - enableComponents:
           - SYSTEM_COMPONENTS
@@ -124,7 +124,7 @@ spec:
       - maxSurge: 1
         maxUnavailable: 0
     # version: "1.27.4" # REGULAR channel
-    version: "1.28.1" # RAPID channel
+    version: "1.28" # RAPID channel
 ### ====================================================================
     nodeConfig:
 ## Change --------------------------------------------------------------
@@ -231,7 +231,7 @@ spec:
       - maxSurge: 1
         maxUnavailable: 0
     # version: "1.27.4" # REGULAR channel
-    version: "1.28.1" # RAPID channel
+    version: "1.28" # RAPID channel
     # nodeCount: 1
 
 ---
@@ -252,7 +252,7 @@ spec:
         testing.upbound.io/example-name: bastion_instance_ubuntu2304_template
     zone: europe-west3-a
 
----
+# ---
 
 ## Network
 # apiVersion: compute.gcp.upbound.io/v1beta1
