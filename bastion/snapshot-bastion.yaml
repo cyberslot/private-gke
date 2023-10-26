@@ -1,0 +1,59 @@
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Snapshot
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/snapshot
+  labels:
+    testing.upbound.io/example-name: bastion_snapshot_ubuntu2304
+  name: bastion-snapshot-ubuntu2304
+spec:
+  forProvider:
+    # labels:
+    #   my_label: value
+    project: web-project-init
+    sourceDiskSelector:
+      matchLabels:
+        testing.upbound.io/example-name: bastion_disk_ubuntu2304
+    storageLocations:
+      - europe-west3
+    zone: europe-west3-a
+
+# ---
+
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Disk
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/disk
+#   labels:
+#     testing.upbound.io/example-name: bastion_disk_ubuntu2304
+#   name: bastion-disk-ubuntu2304
+# spec:
+#   forProvider:
+#     description: Persistent disk for bastion instances.
+#     image: projects/web-project-init/global/images/bastion-storage-image-ubuntu2304
+#     labels:
+#       environment: dev
+#     physicalBlockSizeBytes: 4096
+#     project: web-project-init
+#     size: 10
+#     type: pd-balanced
+#     zone: europe-west3-a
+
+# ---
+
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Image
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/image
+#   labels:
+#     testing.upbound.io/example-name: bastion_storage_image_ubuntu2304
+#   name: bastion-storage-image-ubuntu2304
+# spec:
+#   forProvider:
+#     guestOsFeatures:
+#       - type: UEFI_COMPATIBLE
+#     project: web-project-init
+#     rawDisk:
+#       - source: https://storage.cloud.google.com/web-project-init-daisy-bkt-us/daisy-image-export-20230928-06%3A02%3A10-mz569/outs/image-export-export-disk.tar.gz

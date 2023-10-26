@@ -1,0 +1,87 @@
+## Brand new VM instance from scratch
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Instance
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/instance
+#   labels:
+#     testing.upbound.io/example-name: bastion_instance
+#   name: bastion-instance
+# spec:
+#   forProvider:
+#     bootDisk:
+#     - initializeParams:
+#       - image: ubuntu-os-cloud/ubuntu-minimal-2304-amd64
+#     machineType: e2-micro
+#     metadata:
+#       environment: dev
+#     networkInterface:
+#       - accessConfig:
+#           - networkTier: PREMIUM
+#         subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+#         stackType: IPV4_ONLY
+#     serviceAccount:
+#     - email: 85861670589-compute@developer.gserviceaccount.com
+#       scopes:
+#         - https://www.googleapis.com/auth/devstorage.read_only
+#         - https://www.googleapis.com/auth/logging.write
+#         - https://www.googleapis.com/auth/monitoring.write
+#         - https://www.googleapis.com/auth/servicecontrol
+#         - https://www.googleapis.com/auth/service.management.readonly
+#         - https://www.googleapis.com/auth/trace.append
+#     tags: 
+#     - bastion
+#     - instance
+#     zone: europe-west3-a
+
+---
+
+## Bastion VM instance from storage image (configured)
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Instance
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/instance
+  labels:
+    testing.upbound.io/example-name: bastion_instance_from_image
+  name: bastion-instance-ubuntu2304
+spec:
+  forProvider:
+    bootDisk:
+    - initializeParams:
+      - image: projects/web-project-init/global/images/bastion-storage-image-ubuntu2304
+    machineType: e2-micro
+    metadata:
+      environment: dev
+    networkInterface:
+      - accessConfig:
+          - networkTier: PREMIUM
+            # natIp: NO_ADDRESS # Not supported!
+        subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+        stackType: IPV4_ONLY
+    project: web-project-init
+    reservationAffinity:
+      - type: ANY_RESERVATION
+    scheduling:
+      - automaticRestart: true
+        onHostMaintenance: MIGRATE
+        provisioningModel: STANDARD
+    serviceAccount:
+    - email: 85861670589-compute@developer.gserviceaccount.com
+      scopes:
+        - https://www.googleapis.com/auth/devstorage.read_only
+        - https://www.googleapis.com/auth/logging.write
+        - https://www.googleapis.com/auth/monitoring.write
+        - https://www.googleapis.com/auth/servicecontrol
+        - https://www.googleapis.com/auth/service.management.readonly
+        - https://www.googleapis.com/auth/trace.append
+    shieldedInstanceConfig:
+      - enableIntegrityMonitoring: true
+        enableSecureBoot: false
+        enableVtpm: true
+    tags: 
+    - bastion
+    - instance
+    - http-server
+    - https-server
+    zone: europe-west3-a

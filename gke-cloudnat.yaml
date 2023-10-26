@@ -232,7 +232,7 @@ spec:
 #     parent: organizations/<ORGANIZATION_NAME>
 #     shortName: allow-ssh
 
----
+# ---
 
 ## IAP SSH permissions
 # apiVersion: iap.gcp.upbound.io/v1beta1

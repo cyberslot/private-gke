@@ -1,0 +1,23 @@
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Image
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/image
+  labels:
+    testing.upbound.io/example-name: bastion_storage_image_ubuntu2304
+  name: bastion-storage-image-ubuntu2304
+spec:
+  forProvider:
+    guestOsFeatures:
+      - type: UEFI_COMPATIBLE
+    project: web-project-init
+    rawDisk:
+    ## Storage image shoud be exported in already created bucket "bucket-bastion-image" (bucket-bastionimage.yaml) via gcloud CLI:
+    ## gcloud compute images export \
+    ##   --destination-uri gs://bucket-bastion-image/bastion-storage-image-ubuntu2304.tar.gz \
+    ##   --image bastion-storage-image-ubuntu2304 \
+    ##   --project web-project-init \
+    ##   --compute-service-account crossplane-sa@web-project-init.iam.gserviceaccount.com
+    ## During image export (using daisy) another bucket, named "web-project-init-daisy-bkt-us" is created and tar.gz format of the image is stored in it. URI link, in "- source:" field below, can be obtained from GCP console: 
+    ## Cloud Storage > Buckets > web-project-init-daisy-bkt-us > daisy-image-export-20230928-06:02:10-mz569/ > outs > image-export-export-disk.tar.gz > Authenticated URL
+      - source: https://storage.cloud.google.com/web-project-init-daisy-bkt-us/daisy-image-export-20230928-06%3A02%3A10-mz569/outs/image-export-export-disk.tar.gz
