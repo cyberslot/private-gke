@@ -13,6 +13,7 @@ spec:
       matchLabels:
         testing.upbound.io/example-name: bastion_instance_ubuntu2304_template
     zone: europe-west3-a
+    # zone: europe-central2-a
 
 ---
 
@@ -45,6 +46,7 @@ spec:
     name: bastion-instance-ubuntu2304-template
     networkInterface:
       - subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+      # - subnetwork: "projects/web-project-init/regions/europe-central2/subnetworks/subnet-eu-west-192-2"
         stackType: IPV4_ONLY
     project: web-project-init
     reservationAffinity:
