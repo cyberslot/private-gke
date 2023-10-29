@@ -71,7 +71,6 @@ spec:
     masterAuthorizedNetworksConfig:
       - cidrBlocks:
           - cidrBlock: "192.168.0.0/16"
-          - cidrBlock: "95.111.6.0/24"
     ipAllocationPolicy:
       - clusterIpv4CidrBlock: 10.184.0.0/14
         servicesIpv4CidrBlock: 10.188.0.0/20
