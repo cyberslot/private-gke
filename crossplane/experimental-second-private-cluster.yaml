@@ -4,11 +4,10 @@ metadata:
   annotations:
     meta.upbound.io/example-id: container/v1beta1/cluster
   labels:
-    testing.upbound.io/example-name: cp_nat_cluster
-  name: cp-nat-cluster
+    testing.upbound.io/example-name: cp_nat_cluster_second
+  name: cp-nat-cluster-second
 spec:
   forProvider:
-### Addendum 2 =========================================================
     addonsConfig:
       # - configConnectorConfig:
       #     - enabled: true
@@ -26,12 +25,10 @@ spec:
           - disabled: false
     binaryAuthorization:
       - evaluationMode: DISABLED
-### Addendum 4 =========================================================
     clusterAutoscaling:
       - autoProvisioningDefaults:
           - serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com"
         enabled: false
-### ====================================================================
     enableIntranodeVisibility: false
     loggingConfig:
       - enableComponents:
@@ -51,45 +48,33 @@ spec:
       - channel: RAPID # REGULAR
     workloadIdentityConfig:
       - workloadPool: "web-project-init.svc.id.goog"
-### ====================================================================
     initialNodeCount: 1
-## Change --------------------------------------------------------------
-    # location: europe-west3-a
-    location: europe-west3
-## ---------------------------------------------------------------------
+    # location: europe-central2-a
+    location: europe-central2
     removeDefaultNodePool: true
-### Addendum 1 (Bare minimum for private cluster) ======================
     network: "projects/web-project-init/global/networks/custom-network1"
-    subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+    subnetwork: "projects/web-project-init/regions/europe-central2/subnetworks/subnet-eu-west-192-2"
     ## Private cluster requires Alias IP addresses (ipAllocationPolicy)
     privateClusterConfig:
         ## 'enablePrivateEndpoint' requires 'masterAuthorizedNetworksConfig'
       - enablePrivateEndpoint: true
         ## 'enablePrivateNodes' requires 'masterIpv4CidrBlock'
         enablePrivateNodes: true
-        masterIpv4CidrBlock: 172.16.0.0/28
-        ## Enables control plane private endpoint global access
-        # masterGlobalAccessConfig:
-        #   - enabled: true
+        masterIpv4CidrBlock: 172.17.0.0/28
     masterAuthorizedNetworksConfig:
       - cidrBlocks:
           - cidrBlock: "192.168.0.0/16"
     ipAllocationPolicy:
-      - clusterIpv4CidrBlock: 10.184.0.0/14
-        servicesIpv4CidrBlock: 10.188.0.0/20
-### ====================================================================
-### Addendum 3 =========================================================
+      - clusterIpv4CidrBlock: /14
+        servicesIpv4CidrBlock: /20
     networkPolicy:
       - enabled: true
     networkingMode: VPC_NATIVE
     serviceExternalIpsConfig:
       - enabled: false
-### ====================================================================
-### Addendum 5 =========================================================
     securityPostureConfig:
       - mode: BASIC # Active is BASIC, inactive - DISABLED
-        vulnerabilityMode: VULNERABILITY_BASIC # Active is VULNERABILITY_BASIC, inactive - VULNERABILITY_DISABLED
-### ====================================================================  
+        vulnerabilityMode: VULNERABILITY_BASIC # Active is VULNERABILITY_BASIC, inactive - VULNERABILITY_DISABLED 
 
 ---
 
@@ -99,27 +84,22 @@ metadata:
   annotations:
     meta.upbound.io/example-id: container/v1beta1/nodepool
   labels:
-    testing.upbound.io/example-name: sys_pool
-  name: sys-pool
+    testing.upbound.io/example-name: sys_pool_cluster2
+  name: sys-pool-cluster2
 spec:
   forProvider:
-### Addendum 2a ========================================================
     autoscaling:
       - locationPolicy: BALANCED
         minNodeCount: 0
         maxNodeCount: 1
         # totalMinNodeCount: 1
         # totalMaxNodeCount: 2
-### ====================================================================
-    cluster: cp-nat-cluster
+    cluster: cp-nat-cluster-second
     clusterSelector:
       matchLabels:
-        testing.upbound.io/example-name: cp_nat_cluster
-## Change (Addendum 2ab)------------------------------------------------
-    # location: europe-west3-a
-    location: europe-west3
-## ---------------------------------------------------------------------
-### Addendum 3 =========================================================
+        testing.upbound.io/example-name: cp_nat_cluster_second
+    # location: europe-central2-a
+    location: europe-central2
     management:
       - autoRepair: true      
         autoUpgrade: true
@@ -128,54 +108,40 @@ spec:
         maxUnavailable: 0
     # version: "1.27.4" # REGULAR channel
     version: "1.28" # RAPID channel
-### ====================================================================
     nodeConfig:
-## Change --------------------------------------------------------------
     # - machineType: e2-medium # Initial variant
     - machineType: e2-standard-2
-    # Added only for testing deployment of second cluster
       # diskSizeGb: 70
       # diskType: pd-ssd
       # gcfsConfig:
       #   - enabled: true
-## ---------------------------------------------------------------------
       oauthScopes:
         - https://www.googleapis.com/auth/cloud-platform
-### Addendum 1 =========================================================
         - https://www.googleapis.com/auth/devstorage.read_only
         - https://www.googleapis.com/auth/logging.write
         - https://www.googleapis.com/auth/monitoring
         - https://www.googleapis.com/auth/servicecontrol
         - https://www.googleapis.com/auth/service.management.readonly
         - https://www.googleapis.com/auth/trace.append
-### ====================================================================
-### Addendum 4 =========================================================
       # labels:
       #   namespace: cnrm-system
       taint:
-        ## No 'value' because of 'operator: Exists' in toleration
+        # No 'value' because of 'operator: Exists' in toleration
         - effect: NO_SCHEDULE
           key: components.gke.io/gke-managed-components
           value: ""
         # - effect: NO_SCHEDULE
         #   key: addonmanager.kubernetes.io/mode
         #   value: "Reconcile"
-### ====================================================================
       # preemptible: true
       serviceAccount: "gke-sa@web-project-init.iam.gserviceaccount.com"
       serviceAccountSelector:
         matchLabels:
           testing.upbound.io/example-name: gke-sa
-### Addendum 2b ========================================================
     nodeLocations:
-      - "europe-west3-a"
-      # - "europe-west3-b"
-      - "europe-west3-c"
-## Change (Addendum 2a)-------------------------------------------------
-    ## Should not be used alongside autoscaling.
-    # nodeCount: 1
-## ---------------------------------------------------------------------
-### ====================================================================
+      - "europe-central2-a"
+      # - "europe-central2-b"
+      - "europe-central2-c"
 
 ---
 
@@ -185,8 +151,8 @@ metadata:
   annotations:
     meta.upbound.io/example-id: container/v1beta1/nodepool
   labels:
-    testing.upbound.io/example-name: app_pool
-  name: app-pool
+    testing.upbound.io/example-name: app_pool_cluster2
+  name: app-pool-cluster2
 spec:
   forProvider:
     autoscaling:
@@ -195,11 +161,11 @@ spec:
         maxNodeCount: 1
         # totalMinNodeCount: 1
         # totalMaxNodeCount: 3
-    cluster: cp-nat-cluster
+    cluster: cp-nat-cluster-second
     clusterSelector:
       matchLabels:
-        testing.upbound.io/example-name: cp_nat_cluster
-    location: europe-west3
+        testing.upbound.io/example-name: cp_nat_cluster_second
+    location: europe-central2
     management:
       - autoRepair: true      
         autoUpgrade: true
@@ -232,9 +198,9 @@ spec:
         matchLabels:
           testing.upbound.io/example-name: gke-sa
     nodeLocations:
-      - "europe-west3-a"
-      - "europe-west3-b"
-      - "europe-west3-c"
+      - "europe-central2-a"
+      - "europe-central2-b"
+      - "europe-central2-c"
     upgradeSettings:
       - maxSurge: 1
         maxUnavailable: 0
@@ -242,39 +208,7 @@ spec:
     version: "1.28" # RAPID channel
     # nodeCount: 1
 
----
 
-apiVersion: compute.gcp.upbound.io/v1beta1
-kind: InstanceFromTemplate
-metadata:
-  annotations:
-    meta.upbound.io/example-id: compute/v1beta1/instancefromtemplate
-  labels:
-    testing.upbound.io/example-name: bastion_instance_ubuntu2304_from_template
-  name: bastion-instance-ubuntu2304-from-template
-spec:
-  forProvider:
-    name: bastion-instance-ubuntu2304
-    sourceInstanceTemplateSelector:
-      matchLabels:
-        testing.upbound.io/example-name: bastion_instance_ubuntu2304_template
-    zone: europe-west3-a
-
-# ---
-
-## Network
-# apiVersion: compute.gcp.upbound.io/v1beta1
-# kind: Network
-# metadata:
-#   annotations:
-#     meta.upbound.io/example-id: compute/v1beta1/subnetwork
-#   labels:
-#     testing.upbound.io/example-name: custom_network1
-#   name: custom-network1
-# spec:
-#   forProvider:
-#     autoCreateSubnetworks: false
-#     routingMode: GLOBAL
 ---
 apiVersion: compute.gcp.upbound.io/v1beta1
 kind: Subnetwork
@@ -283,11 +217,11 @@ metadata:
     meta.upbound.io/example-id: compute/v1beta1/subnetwork
   labels:
       testing.upbound.io/example-name: subnet
-  name: subnet-eu-west-192
+  name: subnet-eu-west-192-2
 spec:
   forProvider:
-    ipCidrRange: 192.168.1.0/24
+    ipCidrRange: 192.168.2.0/24
     networkSelector:
       matchLabels:
         testing.upbound.io/example-name: custom_network1
-    region: europe-west3
+    region: europe-central2
