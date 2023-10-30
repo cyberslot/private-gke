@@ -50,7 +50,7 @@ spec:
       - workloadPool: "web-project-init.svc.id.goog"
     ## GKE Gateway API controller configuration
     gatewayApiConfig:
-      - channel: CHANNEL_EXPERIMENTAL
+      - channel: CHANNEL_STANDARD
     initialNodeCount: 1
     # location: europe-central2-a
     location: europe-central2
