@@ -56,7 +56,7 @@ spec:
     location: europe-central2
     removeDefaultNodePool: true
     network: "projects/web-project-init/global/networks/custom-network1"
-    subnetwork: "projects/web-project-init/regions/europe-central2/subnetworks/subnet-eu-west-192-2"
+    subnetwork: "projects/web-project-init/regions/europe-central2/subnetworks/subnet-eu-central2-192"
     ## Private cluster requires Alias IP addresses (ipAllocationPolicy)
     privateClusterConfig:
         ## 'enablePrivateEndpoint' requires 'masterAuthorizedNetworksConfig'
@@ -220,7 +220,7 @@ metadata:
     meta.upbound.io/example-id: compute/v1beta1/subnetwork
   labels:
       testing.upbound.io/example-name: subnet
-  name: subnet-eu-west-192-2
+  name: subnet-eu-central2-192
 spec:
   forProvider:
     ipCidrRange: 192.168.2.0/24
