@@ -57,7 +57,7 @@ spec:
       - accessConfig:
           - networkTier: PREMIUM
             # natIp: NO_ADDRESS # Not supported!
-        subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west-192"
+        subnetwork: "projects/web-project-init/regions/europe-west3/subnetworks/subnet-eu-west3-192"
         stackType: IPV4_ONLY
     project: web-project-init
     reservationAffinity:
