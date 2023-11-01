@@ -210,7 +210,23 @@ spec:
     # version: "1.27.4" # REGULAR channel
     version: "1.28" # RAPID channel
     # nodeCount: 1
+---
 
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: InstanceFromTemplate
+metadata:
+  annotations:
+    meta.upbound.io/example-id: compute/v1beta1/instancefromtemplate
+  labels:
+    testing.upbound.io/example-name: bastion_instance_ubuntu2304_eu_central2_template
+  name: bastion-instance-ubuntu2304-eu-central2-template
+spec:
+  forProvider:
+    name: bastion-instance-ubuntu2304-eu-central2
+    sourceInstanceTemplateSelector:
+      matchLabels:
+        testing.upbound.io/example-name: bastion_instance_ubuntu2304_eu_central2_template
+    zone: europe-central2-a
 
 ---
 apiVersion: compute.gcp.upbound.io/v1beta1
