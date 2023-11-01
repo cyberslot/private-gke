@@ -294,3 +294,37 @@ spec:
       matchLabels:
         testing.upbound.io/example-name: custom_network1
     region: europe-west3
+---
+
+## Used for regional (internal/external) GKE Gateway API
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Subnetwork
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/subnetwork
+#   labels:
+#       testing.upbound.io/example-name: subnet_proxyonly_eu_west3
+#   name: subnet-proxyonly-eu-west3
+# spec:
+#   forProvider:
+#     ipCidrRange: 10.1.1.0/24
+#     networkSelector:
+#       matchLabels:
+#         testing.upbound.io/example-name: custom_network1
+#     purpose: REGIONAL_MANAGED_PROXY
+#     region: europe-west3
+#     role: ACTIVE
+# ---
+# apiVersion: compute.gcp.upbound.io/v1beta1
+# kind: Address
+# metadata:
+#   annotations:
+#     meta.upbound.io/example-id: compute/v1beta1/address
+#   labels:
+#     testing.upbound.io/example-name: regionalext_gw_ip
+#   name: regionalext-gw-ip
+# spec:
+#   forProvider:
+#     addressType: EXTERNAL
+#     networkTier: STANDARD
+#     region: europe-west3
