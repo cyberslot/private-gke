@@ -60,13 +60,18 @@ spec:
     ## Private cluster requires Alias IP addresses (ipAllocationPolicy)
     privateClusterConfig:
         ## 'enablePrivateEndpoint' requires 'masterAuthorizedNetworksConfig'
-      - enablePrivateEndpoint: true
+        ## When true - fully isolated (kubectl from IAP (bastion) only, CIDR notation for 'masterAuthorizedNetworksConfig.cidrBlocks.cidrBlock' should be "network/prefix" covering private network)
+        ## When false - partially isolated (kubectl from public IP addresses only if included in the list of authorized networks (masterAuthorizedNetworksConfig))
+      - enablePrivateEndpoint: false
         ## 'enablePrivateNodes' requires 'masterIpv4CidrBlock'
         enablePrivateNodes: true
         masterIpv4CidrBlock: 172.17.0.0/28
     masterAuthorizedNetworksConfig:
       - cidrBlocks:
+          ## When 'enablePrivateEndpoint: true'
           - cidrBlock: "192.168.0.0/16"
+          ## When 'enablePrivateEndpoint: false'
+          - cidrBlock: "95.111.6.231/32"
     ipAllocationPolicy:
       - clusterIpv4CidrBlock: /14
         servicesIpv4CidrBlock: /20
