@@ -1,0 +1,13 @@
+deployment:
+  reactApp:
+    image:
+      repository: europe-docker.pkg.dev/web-project-init/eu.gcr.io/react-app
+      tag: latest
+  replicas: 2
+kubernetesClusterDomain: cluster.local
+service:
+  ports:
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+  type: LoadBalancer

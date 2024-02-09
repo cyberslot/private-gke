@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "reactapp-chart.fullname" . }}-deployment
+  labels:https://console.cloud.google.com/compute/instances?project=web-project-init
+    app: react-app
+  {{- include "reactapp-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: react-app
+    {{- include "reactapp-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: react-app
+      {{- include "reactapp-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - env:
+        - name: KUBERNETES_CLUSTER_DOMAIN
+          value: {{ quote .Values.kubernetesClusterDomain }}
+        image: {{ .Values.deployment.reactApp.image.repository }}:{{ .Values.deployment.reactApp.image.tag }}
+        name: react-app
+        ports:
+        - containerPort: 3000
+        resources: {}
